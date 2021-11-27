@@ -1,0 +1,12 @@
+#firstHeading
+  map -> $.text
+  @title_text
+
+a
+  map -> 'Title: $.text ($.href)'
+  out
+
+#firstHeading
+  map -> $.text
+  double -> $
+  log

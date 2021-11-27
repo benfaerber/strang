@@ -1,0 +1,39 @@
+#firstHeading
+  log
+
+#firstHeading
+  @header
+
+#firstHeading
+  map -> $.html
+  @title_text
+
+apple
+  map -> ~double
+  out
+
+.mw-highlight-lang-javascript
+  map -> 'Code Block: $'
+  out
+
+.mw-wiki-logo
+  map -> $.src
+  download -> logo.png
+
+a
+  map -> $.src, $.text
+  filter -> '.js' in $.1
+  log
+
+
+; Every function call is either map or filter, possibly reduce in the future
+
+; map ->
+; fitler ~>
+; reduce =>
+
+a
+  ; get text from all a elems
+  map -> $.text
+  ; filter out empty
+  is_empty ~> $
