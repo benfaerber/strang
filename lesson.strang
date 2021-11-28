@@ -1,0 +1,13 @@
+;a
+;  map -> $.href
+;  slice |>
+;  log
+
+a
+  map -> $.href
+  truthy => $
+  slice |> 5 - 15
+  @links
+
+@links
+  log

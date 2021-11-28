@@ -1,3 +1,4 @@
+(*
 #firstHeading
   map -> $.text
   @title_text
@@ -8,5 +9,51 @@ a
 
 #firstHeading
   map -> $.text
-  double -> $
+  upper -> $
+  log
+
+a
+  map -> $.text
+  truthy -> $
+  slice |> 10..12
+  log |> $
+
+a
+  map -> $.href
+  truthy => $
+  contains => 'http'
+  slice |> 1..10
+  upper -> $
+  lower -> $
+  log |> $
+
+.number-list li
+  map -> $.text
+  int
+  log |> $
+  times -> -1
+  log |> $
+*)
+
+.number-list li
+  map -> $.text
+  slice |> 1..3
+  int
+  @test_var
+
+@test_var
+  times -> -1
+  @test_var
+
+@test_var
+  log |> $
+
+.number-list li
+  map -> $.text
+  slice |> 1
+  @@test_const
+
+@@test_const
+  log |> $
+  int
   log

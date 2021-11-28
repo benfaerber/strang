@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 
-from strang_functions import strang_std
+from strang_functions_old import strang_std
 
 class Strang:
   def __init__(self, code, raw_html, function_context={}):
@@ -64,7 +64,7 @@ class Strang:
     is_py = name in self.function_context
 
     if not is_std and not is_py:
-      print(f'Invalid Function: {name}')
+      raise ValueError(f'Invalid Function: {name}')
 
     func_table = strang_std if is_std else self.function_context
     response = func_table[name](context, params)
@@ -77,7 +77,6 @@ class Strang:
       context = node
       for function in block['functions']:
         context = self.run_function(context, function)
-    print(self.variables)
 
   def start(self):
     lex = self.parse_code()
