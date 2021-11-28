@@ -35,6 +35,15 @@ a
   log |> $
 *)
 
+(*
+; I want to implement this!
+strang
+  include -> {apple.strang}
+  include -> {banana.strang}
+  flag -> {verbose}
+*)
+
+(*
 .number-list li
   map -> $.text
   slice |> 1..3
@@ -57,3 +66,18 @@ a
   log |> $
   int
   log
+*)
+
+
+!strang
+  ;load -> {wiki.html}
+  import -> {secondary}
+  flag -> {verbose}
+  flag -> {save_logs}
+
+.number-list li
+  map -> {Item: $.text}
+  ; Global Log!
+  log |> $
+  ; Each Log!
+  ;log -> $

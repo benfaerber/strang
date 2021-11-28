@@ -11,12 +11,19 @@ def strang_log(data):
 def strang_out(data):
   return data['context']
 
+def string_literal_map(context, params, property_pattern):
+  fillins = re.findall(property_pattern, params)
+  built = params
+  for fillin in fillins:
+    built = built.replace(f'$.{fillin}', get_attr(fillin, context))
+  return built
+
 def strang_map(data):
   context, params, param_type = destruct(data)
   property_pattern = r'\$(?:\.([a-zA-Z0-9_]+))?'
   if param_type == 'string':
     # TODO: Implement String Map
-    return context
+    return string_literal_map(context, params, property_pattern)
 
   matches = re.match(property_pattern, params)
   attr = matches and matches.group(1)
@@ -57,16 +64,22 @@ strang_std = {
   'truthy': std_operators.strang_truthy,
   'upper': std_operators.strang_upper,
   'lower': std_operators.strang_lower,
+
+  # Comparision
   'lt': std_operators.strang_lt,
   'gt': std_operators.strang_gt,
   'le': std_operators.strang_le,
   'ge': std_operators.strang_ge,
   'eq': std_operators.strang_eq,
+
+  # Operations
   'plus': std_operators.strang_plus,
   'minus': std_operators.strang_minus,
   'times': std_operators.strang_times,
   'divide': std_operators.strang_divide,
   'modulo': std_operators.strang_modulo,
+
+  # Conversion
   'int': std_operators.strang_int,
   'float': std_operators.strang_float,
   'str': std_operators.strang_str

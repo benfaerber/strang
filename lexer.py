@@ -2,6 +2,16 @@ import re
 
 from pprint import pprint
 
+strang_symbols = {
+  'comment_single_line': ';',
+  'comment_multiline_start': '(*',
+  'comment_multiline_end': '*)',
+  'variable_prefix': '@',
+  'constant_prefix': '@@',
+  'string_start': '{',
+  'string_end': '}'
+}
+
 class StrangLexer:
   def __init__(self):
     self.use_tabs = False
@@ -16,21 +26,11 @@ class StrangLexer:
       '|': 'all'
     }
 
-    self.symbols = {
-      'comment_single_line': ';',
-      'comment_multiline_start': '(*',
-      'comment_multiline_end': '*)',
-      'variable_prefix': '@',
-      'constant_prefix': '@@',
-      'string_start': '\'',
-      'string_end': '\''
-    }
-
   def get_ptype(self, params: str):
     if not params:
       return 'void'
 
-    is_str = params.startswith(self.symbols['string_start']) and params.endswith(self.symbols['string_end'])
+    is_str = params.startswith(strang_symbols['string_start']) and params.endswith(strang_symbols['string_end'])
     ptype = 'string' if is_str else 'normal'
     return ptype
 
@@ -47,13 +47,15 @@ class StrangLexer:
     return int(count / self.tab_size)
 
   def lex_parent(self, raw_parent):
-    is_var = raw_parent.startswith(self.symbols['variable_prefix'])
-    is_const = raw_parent.startswith(self.symbols['constant_prefix'])
+    is_var = raw_parent.startswith(strang_symbols['variable_prefix'])
+    is_const = raw_parent.startswith(strang_symbols['constant_prefix'])
 
     if is_const:
       return {'type': 'constant', 'selector': raw_parent[2:]}
     elif is_var:
       return {'type': 'variable', 'selector': raw_parent[1:]}
+    elif raw_parent == '!strang':
+      return {'type': 'settings', 'selector': 'strang'}
 
     return {'type': 'node', 'selector': raw_parent}
 
@@ -85,8 +87,8 @@ class StrangLexer:
     clean_func = raw_func.strip()
 
     # Variable
-    if clean_func.startswith(self.symbols['variable_prefix']):
-      is_const = clean_func.startswith(self.symbols['constant_prefix'])
+    if clean_func.startswith(strang_symbols['variable_prefix']):
+      is_const = clean_func.startswith(strang_symbols['constant_prefix'])
       trim_val = 1 if not is_const else 2
       params = clean_func[trim_val:]
       lexed_func = {
@@ -113,27 +115,30 @@ class StrangLexer:
         return True
     return False
 
+  def is_only_whitespace(self, text):
+    whitespace = [' ', '\t']
+    return all([l in whitespace for l in text])
 
   def lex(self, raw_code):
     lines = raw_code.split('\n')
     lines_no_comments = [
-      l.split(self.symbols['comment_single_line'])[0]
+      l.split(strang_symbols['comment_single_line'])[0]
       for l in lines
     ]
 
     lines_no_multilines = []
     is_comment = False
     for line in lines_no_comments:
-      if self.symbols['comment_multiline_start'] in line:
+      if strang_symbols['comment_multiline_start'] in line:
         is_comment = True
 
       if not is_comment:
         lines_no_multilines.append(line)
 
-      if self.symbols['comment_multiline_end'] in line:
+      if strang_symbols['comment_multiline_end'] in line:
         is_comment = False
 
-    lines_not_empty = [l for l in lines_no_multilines if not not l]
+    lines_not_empty = [l for l in lines_no_multilines if not self.is_only_whitespace(l)]
 
     current_block = 0
     blocks = []
