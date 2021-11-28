@@ -53,3 +53,11 @@ null
   str c1 ->
   prepend c3>c1 -> {NUMBER }
   log c3 |>
+
+null
+  range |> 10..=0
+  log |>
+
+null
+  range |> 0..=10
+  log |>

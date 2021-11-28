@@ -37,6 +37,11 @@ def strang_map(data):
 
 def strang_range(data):
   rmin, rmax = data.params
+  # Reverse Range
+  if rmin > rmax:
+    range_spread = [rmin - v for v in range(rmin - rmax)]
+    return range_spread
+
   range_spread = [v + rmin for v in range(rmax - rmin)]
   return range_spread
 

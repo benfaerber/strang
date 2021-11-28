@@ -44,11 +44,17 @@ class StrangLexer:
     if is_number:
       value = int(params_no_comma) * (-1 if is_negative else 1)
       return value, 'number'
-    # A range: 0..11
-    range_pattern = r'(\d{1,})\.\.(\d{1,})'
+
+    # A range: 0..11, 10..4, Inclusive 1..=10
+    range_pattern = r'(\d{1,})\.\.(\=)?(\d{1,})'
     range_match = re.match(range_pattern, params)
     if range_match:
-      rmin, rmax = (int(g) for g in range_match.groups())
+      rmin, inc, rmax = range_match.groups()
+      rmin, rmax = int(rmin), int(rmax)
+      inclusive = inc != None
+      if inclusive:
+        pusher = 1 if rmin < rmax else -1
+        return (rmin, rmax+pusher), 'range'
       return (rmin, rmax), 'range'
 
     is_str = params.startswith(strang_symbols['string_start']) and params.endswith(strang_symbols['string_end'])
