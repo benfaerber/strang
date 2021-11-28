@@ -1,5 +1,4 @@
 !strang
-  flag -> {verbose}
   flag -> {save_logs}
 
 
@@ -15,18 +14,18 @@
   upper
   log |>
 
-new
+null
   range |> 0..10
   plus -> 2
   log |>
 
 1, 2, 3, 4, 5
-  range |> 0..10
+  range |> 1..10
   plus -> 2
   log |>
 
-new
-  range |> 0..20
+null
+  range |> 1..20
   @numbers
 
 @numbers
@@ -37,15 +36,20 @@ new
 (*
 ; Syntax I want:
 
-new
+null
   range 0..100
   @numbers
 
 @numbers
-  modulo t1>t2 -> 3
+  modulo c1>c3 -> 3
   modulo t1>t3 -> 5
-  if t2 -> {$ Fizz}
-  if t3 -> {$ Buzz}
+  if c2 -> {$ Fizz}
+  if c3 -> {$ Buzz}
   log |>
 
 *)
+
+@numbers
+  str c1 ->
+  prepend c3>c1 -> {NUMBER }
+  log c3 |>

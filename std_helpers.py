@@ -1,13 +1,4 @@
 
-def destruct(data, c=3):
-  if c == 1:
-    return data['context']
-  elif c == 2:
-    return (data['context'] or None, data['params'] or None)
-
-  return (data['context'], data['params'] or None, data['ptype'] or None)
-
-
 def get_attr(attr, c):
   attr_table = {
     'text': lambda k: k.text,

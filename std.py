@@ -1,21 +1,19 @@
 import re
 
 import std_operators
-from std_helpers import destruct, get_attr
+from std_helpers import get_attr
 
 def strang_log(data):
-  context = destruct(data, 1)
-  if 'no_logs' not in data['flags']:
-    print(context)
-  return context
+  if 'no_logs' not in data.flags:
+    print(data.context)
+  return data.context
 
 def strang_plog(data):
-  context = destruct(data, 1)
-  print(context[0])
-  return context
+  print(data.context[0])
+  return data.context
 
 def strang_out(data):
-  return data['context']
+  return data.context
 
 def string_literal_map(context, params, property_pattern):
   fillins = re.findall(property_pattern, params)
@@ -25,68 +23,58 @@ def string_literal_map(context, params, property_pattern):
   return built
 
 def strang_map(data):
-  context, params, ptype = destruct(data)
   property_pattern = r'\$(?:\.([a-zA-Z0-9_]+))?'
-  if ptype == 'string':
+  if data.ptype == 'string':
     # TODO: Implement String Map
-    return string_literal_map(context, params, property_pattern)
+    return string_literal_map(data.context, data.params, property_pattern)
 
-  matches = re.match(property_pattern, params)
+  matches = re.match(property_pattern, data.params)
   attr = matches and matches.group(1)
   if attr:
-    return get_attr(attr, context)
+    return get_attr(attr, data.context)
 
-  return context
+  return data.context
 
 def strang_range(data):
-  rmin, rmax = data['params']
+  rmin, rmax = data.params
   range_spread = [v + rmin for v in range(rmax - rmin)]
   return range_spread
 
 # String Manipulation
 
 def strang_slice(data):
-  context, (rmin, rmax) = destruct(data, 2)
-  return context[rmin:rmax]
+  rmin, rmax = data.params
+  return data.context[rmin:rmax]
 
 def strang_split(data):
-  context, params = destruct(data, 2)
-  return context.split(params)
+  return data.context.split(data.params)
 
 def strang_join(data):
-  context, params = destruct(data, 2)
-  return params.join(context)
+  return data.params.join(data.context)
 
 def strang_first(data):
-  context = destruct(data, 1)
-  return [context[0]]
+  return [data.context[0]]
 
 def strang_last(data):
-  context = destruct(data, 1)
-  return [context[-1]]
+  return [data.context[-1]]
 
 def strang_chars(data):
-  context = destruct(data, 1)
-  return [l for l in context[0]]
+  return [l for l in data.context[0]]
 
 def strang_contains(data):
-  context, params = destruct(data, 2)
-  return params in context
+  return data.params in data.context
 
 def strang_download(data):
-  return data['context']
+  return data.context
 
 def strang_sum(data):
-  context = destruct(data, 1)
-  return context + data['acc']
+  return data.context + data.acc
 
 def strang_concat(data):
-  context = destruct(data, 1)
-  return str(data['acc']) + str(context)
+  return str(data.acc) + str(data.context)
 
 def strang_reverse(data):
-  context = destruct(data, 1)
-  return context.reverse()
+  return data.context.reverse()
 
 strang_std = {
   'log': strang_log,
@@ -126,6 +114,7 @@ strang_std = {
   'divide': std_operators.strang_divide,
   'modulo': std_operators.strang_modulo,
   'sum': strang_sum,
+  'prepend': std_operators.strang_prepend,
   # Conversion
   'int': std_operators.strang_int,
   'float': std_operators.strang_float,

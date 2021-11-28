@@ -1,41 +1,33 @@
-def c(function, data, new_context):
-  data['context'] = new_context
-  response = function(data)
+def c(data, new_context):
+  data.context = new_context
+  response = data.function(data)
 
-  if data['modifier'] == 'not':
+  if data.modifier and data.modifier.type == 'not':
     response = not response
   return response
 
-def destruct(data):
-  return (data['context'], data['function'])
-
 def strang_map(data):
-  context, function = destruct(data)
-  return [c(function, data, item) for item in context]
+  return [c(data, item) for item in data.context]
 
 def strang_filter(data):
-  context, function = destruct(data)
   return [
-    item for item in context
-    if not not c(function, data, item)
+    item for item in data.context
+    if not not c(data, item)
   ]
 
 def strang_all(data):
-  _, function = destruct(data)
-  return function(data)
+  return data.function(data)
 
 def strang_reduce(data):
-  context, function = destruct(data)
-  for item in context:
-    acc = c(function, data, item)
+  for item in data.context:
+    acc = c(data, item)
 
   return [acc]
 
 def get_bool_list(data):
-  context, function = destruct(data)
   bool_list = [
-    c(function, data, item)
-    for item in context
+    c(data, item)
+    for item in data.context
   ]
 
   return bool_list
@@ -48,9 +40,8 @@ def strang_some(data):
 
 
 def strang_unimpl(data):
-  context, = destruct(data)
   print('Not Implemented!!!')
-  return context
+  return data.context
 
 strang_iters = {
   'map': strang_map,

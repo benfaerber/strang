@@ -1,5 +1,7 @@
+
 {Numbers to 10:}
   log
+
 new
   range |> 1..10
   log |>

@@ -10,11 +10,14 @@ strang_symbols = {
   'constant_prefix': '@',
   'string_start': '{',
   'string_end': '}',
-  'modifier_not': '!'
+  'modifier_not': '!',
+  'cell_prefix': 'c',
+  'cell_pointer': '>'
 }
 
 LexedParent = namedtuple('LexedParent', ['type', 'key'])
 LexedFunction = namedtuple('LexedFunction', ['name', 'ftype', 'params', 'ptype', 'modifier'], defaults=(None, None, None, 'void', None))
+LexedModifier = namedtuple('LexedModifier', ['type', 'value'])
 
 class StrangLexer:
   def __init__(self):
@@ -57,6 +60,30 @@ class StrangLexer:
     cleaned_params = params.replace(',', '')
     return cleaned_params, 'normal'
 
+  def parse_modifier(self, raw_modifier: str):
+    if not raw_modifier:
+      return None
+    raw_modifier = raw_modifier.strip()
+
+    if strang_symbols['modifier_not'] == raw_modifier:
+      return LexedModifier(type="not", value="not")
+
+    cell_to_int = lambda v: int(v.replace(strang_symbols['cell_prefix'], ''))
+    if strang_symbols['cell_prefix'] in raw_modifier:
+      cell_chunks = raw_modifier.split(strang_symbols['cell_pointer'])
+      from_cell, to_cell = (None, None)
+      if len(cell_chunks) == 1:
+        from_cell = cell_to_int(cell_chunks[0])
+        to_cell = from_cell
+      else:
+        from_cell = cell_to_int(cell_chunks[0])
+        to_cell = cell_to_int(cell_chunks[1])
+
+      cells = (from_cell, to_cell)
+      print(cells)
+      return LexedModifier(type='cells', value=cells)
+
+    return None
 
   def count_leading_tabs(self, text):
     text = text.replace('\t', ' ' * self.tab_size)
@@ -86,7 +113,7 @@ class StrangLexer:
     str_count = self.count_char(raw_parent, str_start) == self.count_char(raw_parent, str_end) and self.count_char(raw_parent, str_start) == 1
     is_str = str_literal and str_count
 
-    is_new = raw_parent == 'new'
+    is_null = raw_parent == 'null'
     is_list = not is_str and ',' in raw_parent
 
     if is_var or is_const:
@@ -103,21 +130,20 @@ class StrangLexer:
       convert_list = [convert(s) for s in str_list]
       final_list = [s for s in convert_list if not not s]
       return LexedParent(type='list', key=final_list)
-    elif is_new:
-      return LexedParent(type='new', key=[])
+    elif is_null:
+      return LexedParent(type='null', key=[])
     elif raw_parent == '!strang':
       return LexedParent(type='settings', key='strang')
 
     return LexedParent(type='node', key='raw_parent')
 
   def lex_function(self, raw_func):
-    func_pattern = r'(.+?)(?: )?((?:t)?[\d|a|!])?(?: )?(.)>(.+)?'
+    func_pattern = r'(.+?)(?: )?([\d|c|!|>]+)?(?: )?(.)>(?: )?(.+)?'
     matches = re.match(func_pattern, raw_func)
     if matches:
       groups = matches.groups()
-
       c_strip = lambda v: v.strip() if v else None
-      func, mod_symbol, key, params = (c_strip(p) for p in groups)
+      func, raw_modifier, key, params = (c_strip(p) for p in groups)
 
       if key not in self.func_symbols:
         arrow_types = ', '.join([s + '>' for s in self.func_symbols.keys()])
@@ -126,13 +152,7 @@ class StrangLexer:
       func_type = self.func_symbols[key]
       clean_params, param_type = self.parse_params(params)
 
-      modifiers = {
-        strang_symbols['modifier_not']: 'not'
-      }
-      modifier = None
-      if mod_symbol in modifiers:
-        modifier = modifiers[mod_symbol]
-
+      modifier = self.parse_modifier(raw_modifier)
       lexed_func = LexedFunction(name=func, ftype=func_type, params=clean_params, ptype=param_type, modifier=modifier)
       return lexed_func
 

@@ -7,7 +7,18 @@ from iters import strang_iters
 from std import strang_std
 
 
-FunctionCall = namedtuple('FunctionCall', ['function', 'params', 'ptype', 'context', 'acc', 'modifier', 'flags'])
+class FunctionCall:
+  def __init__(self, function, lexed_function, context, acc=None, flags=[]):
+    self.function = function
+
+    self.params = lexed_function.params
+    self.ptype = lexed_function.ptype
+    self.modifier = lexed_function.modifier if lexed_function.modifier else None
+
+    self.context = context
+    self.acc = acc
+    self.flags = flags
+
 
 class Strang:
   def __init__(self, raw_code: str, raw_html: str, functional_context: dict = {}, flags: list = []):
@@ -30,19 +41,17 @@ class Strang:
 
   def get_node(self, parent):
     p = parent
-    if p.type == 'variable':
-      if p.key not in self.variables:
-        raise ValueError(f'Variable "{p.key}" is not defined!')
-      return self.variables[p.key]
-    elif p.type == 'constant':
-      if p.key not in self.constants:
-        raise ValueError(f'Constant "{p.key}" is not defined!')
-      return self.constants[p.key]
+
+    if p.type == 'variable' or p.type == 'constant':
+      table = self.variables if p.type == 'variable' else self.constants
+      if p.key not in table:
+        raise ValueError(f'{p.type} "{p.key}" is not defined!')
+      return table[p.key]
     elif p.type == 'string':
       return [str(p.key)]
     elif p.type == 'list':
       return p.key
-    elif p.type == 'new':
+    elif p.type == 'null':
       return []
 
     return self.dom.select(p.key, href=True)
@@ -83,27 +92,19 @@ class Strang:
     ftype = type(context[0])
     return defs[ftype] if ftype in defs else 0
 
-  def run_function(self, function, context):
+  def run_function(self, lexed_function, context):
     if 'show_functions' in self.flags:
       print(function)
-    f = function
+    f = lexed_function
 
     if f.name in self.definition_names:
       return self.define_variable(f.name, context, f.params)
 
     iter_func = strang_iters[f.ftype]
-    func = self.get_function(f.name)
+    caller = self.get_function(f.name)
 
     accumulator = self.get_default_accumulator(context)
-    data = {
-      'function': func,
-      'params': f.params,
-      'ptype': f.ptype,
-      'context': context,
-      'acc': accumulator,
-      'modifier': f.modifier if f.modifier else None,
-      'flags': self.flags
-    }
+    data = FunctionCall(function=caller, lexed_function=lexed_function, context=context, acc=accumulator, flags=self.flags)
     new_context = iter_func(data)
     return new_context
 
