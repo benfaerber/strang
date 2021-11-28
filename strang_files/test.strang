@@ -2,9 +2,6 @@
   flag -> {verbose}
   flag -> {save_logs}
 
-.number-list li
-  map -> $.text
-  @numbers
 
 {moisture}
   upper
@@ -27,3 +24,28 @@ new
   range |> 0..10
   plus -> 2
   log |>
+
+new
+  range |> 0..20
+  @numbers
+
+@numbers
+  modulo -> 5
+  log |>
+
+
+(*
+; Syntax I want:
+
+new
+  range 0..100
+  @numbers
+
+@numbers
+  modulo t1>t2 -> 3
+  modulo t1>t3 -> 5
+  if t2 -> {$ Fizz}
+  if t3 -> {$ Buzz}
+  log |>
+
+*)

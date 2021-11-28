@@ -1,19 +1,23 @@
-def switch_context(data, new_context):
+def c(function, data, new_context):
   data['context'] = new_context
-  return data
+  response = function(data)
+
+  if data['modifier'] == 'not':
+    response = not response
+  return response
 
 def destruct(data):
   return (data['context'], data['function'])
 
 def strang_map(data):
   context, function = destruct(data)
-  return [function(switch_context(data, item)) for item in context]
+  return [c(function, data, item) for item in context]
 
 def strang_filter(data):
   context, function = destruct(data)
   return [
     item for item in context
-    if not not function(switch_context(data, item))
+    if not not c(function, data, item)
   ]
 
 def strang_all(data):
@@ -23,14 +27,14 @@ def strang_all(data):
 def strang_reduce(data):
   context, function = destruct(data)
   for item in context:
-    acc = function(switch_context(data, item))
+    acc = c(function, data, item)
 
   return [acc]
 
 def get_bool_list(data):
   context, function = destruct(data)
   bool_list = [
-    function(switch_context(data, item))
+    c(function, data, item)
     for item in context
   ]
 

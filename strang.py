@@ -1,8 +1,13 @@
+from os import name
 from bs4 import BeautifulSoup
+from collections import namedtuple
 
 from lexer import StrangLexer
 from iters import strang_iters
 from std import strang_std
+
+
+FunctionCall = namedtuple('FunctionCall', ['function', 'params', 'ptype', 'context', 'acc', 'modifier', 'flags'])
 
 class Strang:
   def __init__(self, raw_code: str, raw_html: str, functional_context: dict = {}, flags: list = []):
@@ -17,29 +22,30 @@ class Strang:
     self.variables = {}
     self.constants = {}
 
+    self.stats = {}
+
     self.variable_names = ['variable', 'let']
     self.constant_names = ['constant', 'const']
     self.definition_names = self.variable_names + self.constant_names
 
   def get_node(self, parent):
-    selector, ptype = (parent[k] for k in ['selector', 'type'])
-
-    if ptype == 'variable':
-      if selector not in self.variables:
-        raise ValueError(f'Variable "{selector}" is not defined!')
-      return self.variables[selector]
-    elif ptype == 'constant':
-      if selector not in self.constants:
-        raise ValueError(f'Constant "{selector}" is not defined!')
-      return self.constants[selector]
-    elif ptype == 'string':
-      return [str(selector)]
-    elif ptype == 'list':
-      return selector
-    elif ptype == 'new':
+    p = parent
+    if p.type == 'variable':
+      if p.key not in self.variables:
+        raise ValueError(f'Variable "{p.key}" is not defined!')
+      return self.variables[p.key]
+    elif p.type == 'constant':
+      if p.key not in self.constants:
+        raise ValueError(f'Constant "{p.key}" is not defined!')
+      return self.constants[p.key]
+    elif p.type == 'string':
+      return [str(p.key)]
+    elif p.type == 'list':
+      return p.key
+    elif p.type == 'new':
       return []
 
-    return self.dom.select(selector, href=True)
+    return self.dom.select(p.key, href=True)
 
   def get_function(self, name):
     if name in strang_std:
@@ -78,21 +84,24 @@ class Strang:
     return defs[ftype] if ftype in defs else 0
 
   def run_function(self, function, context):
-    name, params, ptype, ftype = (function[k] for k in ['name', 'params', 'ptype', 'ftype'])
+    if 'show_functions' in self.flags:
+      print(function)
+    f = function
 
-    if name in self.definition_names:
-      return self.define_variable(name, context, params)
+    if f.name in self.definition_names:
+      return self.define_variable(f.name, context, f.params)
 
-    iter_func = strang_iters[ftype]
-    func = self.get_function(name)
+    iter_func = strang_iters[f.ftype]
+    func = self.get_function(f.name)
 
     accumulator = self.get_default_accumulator(context)
     data = {
       'function': func,
-      'params': params,
-      'ptype': ptype,
+      'params': f.params,
+      'ptype': f.ptype,
       'context': context,
       'acc': accumulator,
+      'modifier': f.modifier if f.modifier else None,
       'flags': self.flags
     }
     new_context = iter_func(data)
@@ -131,8 +140,7 @@ class Strang:
 
   def set_settings(self, block):
     functions = block['children']
-    for function in functions:
-      name, params, ptype = (function[k] for k in ['name', 'params', 'ptype'])
+    for f in functions:
       funcs = {
         'load': self.reload_dom,
         'flag': self.set_flag,
@@ -140,11 +148,11 @@ class Strang:
         'import': self.import_file
       }
 
-      funcs[name](params, ptype)
+      funcs[f.name](f.params, f.ptype)
 
   def run_block(self, block):
     parent, children = (block[k] for k in ['parent', 'children'])
-    if parent['type'] == 'settings':
+    if parent.type == 'settings':
       return
 
     node = self.get_node(parent)
@@ -155,7 +163,7 @@ class Strang:
   def execute(self):
     for block in self.lex:
       parent = block['parent']
-      if parent['type'] == 'settings':
+      if parent.type == 'settings':
         self.set_settings(block)
 
     for block in self.lex:

@@ -1,6 +1,6 @@
 import re
-
 from pprint import pprint
+from collections import namedtuple
 
 strang_symbols = {
   'comment_single_line': ';',
@@ -9,8 +9,12 @@ strang_symbols = {
   'variable_prefix': '@*',
   'constant_prefix': '@',
   'string_start': '{',
-  'string_end': '}'
+  'string_end': '}',
+  'modifier_not': '!'
 }
+
+LexedParent = namedtuple('LexedParent', ['type', 'key'])
+LexedFunction = namedtuple('LexedFunction', ['name', 'ftype', 'params', 'ptype', 'modifier'], defaults=(None, None, None, 'void', None))
 
 class StrangLexer:
   def __init__(self):
@@ -88,32 +92,32 @@ class StrangLexer:
     if is_var or is_const:
       title = 'variable' if is_var else 'constant'
       plen = len(strang_symbols[f'{title}_prefix'])
-      return {'type': title, 'selector': raw_parent[plen:]}
+      return LexedParent(type=title, key=raw_parent[plen:])
     elif is_str:
       slen = len(str_start)
       elen = len(str_end) * -1
-      return {'type': 'string', 'selector': raw_parent[slen:elen]}
+      return LexedParent(type='string', key=raw_parent[slen:elen])
     elif is_list:
       str_list = raw_parent.replace(' ', '').split(',')
       convert = lambda v: int(v) if not v.startswith(str_start) else str(v[1:-1])
       convert_list = [convert(s) for s in str_list]
       final_list = [s for s in convert_list if not not s]
-      return {'type': 'list', 'selector': final_list}
+      return LexedParent(type='list', key=final_list)
     elif is_new:
-      return {'type': 'new', 'selector': []}
+      return LexedParent(type='new', key=[])
     elif raw_parent == '!strang':
-      return {'type': 'settings', 'selector': 'strang'}
+      return LexedParent(type='settings', key='strang')
 
-    return {'type': 'node', 'selector': raw_parent}
+    return LexedParent(type='node', key='raw_parent')
 
   def lex_function(self, raw_func):
-    func_pattern = r'(.+?)(?: )?(t[\d|a])?(?: )?(.)>(.+)?'
+    func_pattern = r'(.+?)(?: )?((?:t)?[\d|a|!])?(?: )?(.)>(.+)?'
     matches = re.match(func_pattern, raw_func)
     if matches:
       groups = matches.groups()
 
       c_strip = lambda v: v.strip() if v else None
-      func, tindex, key, params = (c_strip(p) for p in groups)
+      func, mod_symbol, key, params = (c_strip(p) for p in groups)
 
       if key not in self.func_symbols:
         arrow_types = ', '.join([s + '>' for s in self.func_symbols.keys()])
@@ -122,13 +126,14 @@ class StrangLexer:
       func_type = self.func_symbols[key]
       clean_params, param_type = self.parse_params(params)
 
-      lexed_func = {
-        'ftype': func_type,
-        'ptype': param_type,
-        'name': func,
-        'params': clean_params
+      modifiers = {
+        strang_symbols['modifier_not']: 'not'
       }
+      modifier = None
+      if mod_symbol in modifiers:
+        modifier = modifiers[mod_symbol]
 
+      lexed_func = LexedFunction(name=func, ftype=func_type, params=clean_params, ptype=param_type, modifier=modifier)
       return lexed_func
 
     clean_func = raw_func.strip()
@@ -140,21 +145,13 @@ class StrangLexer:
       params = clean_func[trim_val:]
       clean_params, ptype = self.parse_params(params)
 
-      lexed_func = {
-        'ftype': 'map',
-        'ptype': ptype,
-        'name': 'variable' if is_var else 'constant',
-        'params': params
-      }
+      fname = 'variable' if is_var else 'constant'
+      lexed_func = LexedFunction(name=fname, ftype='map', params=params, ptype=ptype)
       return lexed_func
 
     # Void Function
-    lexed_func = {
-      'ftype': 'map',
-      'ptype': 'void',
-      'name': raw_func.strip(),
-      'params': None
-    }
+    fname = raw_func.strip()
+    lexed_func = LexedFunction(name=fname, ftype='map')
     return lexed_func
 
   def is_function(self, line):

@@ -1,0 +1,18 @@
+{Numbers to 10:}
+  log
+new
+  range |> 1..10
+  log |>
+  @numbers_to_10
+
+{Odd Numbers:}
+  log
+@numbers_to_10
+  modulo => 2
+  log |>
+
+{Even Numbers:}
+  log
+@numbers_to_10
+  modulo ! => 2
+  log |>
