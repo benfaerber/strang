@@ -38,6 +38,11 @@ def strang_map(data):
 
   return context
 
+def strang_range(data):
+  rmin, rmax = data['params']
+  range_spread = [v + rmin for v in range(rmax - rmin)]
+  return range_spread
+
 # String Manipulation
 
 def strang_slice(data):
@@ -98,6 +103,7 @@ strang_std = {
   'concat': strang_concat,
   'split': strang_split,
   'join': strang_join,
+  'range': strang_range,
 
   'falsey': std_operators.strang_falsey,
   'truthy': std_operators.strang_truthy,

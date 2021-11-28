@@ -36,6 +36,8 @@ class Strang:
       return [str(selector)]
     elif ptype == 'list':
       return selector
+    elif ptype == 'new':
+      return []
 
     return self.dom.select(selector, href=True)
 
@@ -85,14 +87,15 @@ class Strang:
     func = self.get_function(name)
 
     accumulator = self.get_default_accumulator(context)
-    new_context = iter_func({
+    data = {
       'function': func,
       'params': params,
       'ptype': ptype,
       'context': context,
       'acc': accumulator,
       'flags': self.flags
-    })
+    }
+    new_context = iter_func(data)
     return new_context
 
   def reload_dom(self, params, ptype=None):
@@ -102,7 +105,8 @@ class Strang:
     if ptype != 'string':
       raise ValueError(f'A flag must be a string!')
 
-    self.flags.remove(params)
+    if params in self.flags:
+      self.flags.remove(params)
 
   def set_flag(self, params, ptype=None):
     if ptype != 'string':
@@ -156,6 +160,13 @@ class Strang:
 
     for block in self.lex:
       self.run_block(block)
+
+    if 'verbose' in self.flags:
+      print('VERBOSE OUTPUT:')
+      print('  Constants:')
+      print('  ', self.constants)
+      print('  Variables:')
+      print('  ', self.variables)
 
 def main():
   from cli import cli

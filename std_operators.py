@@ -20,7 +20,7 @@ def type_matcher(context, params, ptype):
   if ptype == 'string':
     return str(params)
 
-  if ptype != 'string':
+  if ptype == 'number':
     return int(params)
 
   return params

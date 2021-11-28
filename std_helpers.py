@@ -5,7 +5,7 @@ def destruct(data, c=3):
   elif c == 2:
     return (data['context'] or None, data['params'] or None)
 
-  return (data['context'] or None, data['params'] or None, data['ptype'] or None)
+  return (data['context'], data['params'] or None, data['ptype'] or None)
 
 
 def get_attr(attr, c):

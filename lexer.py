@@ -30,6 +30,13 @@ class StrangLexer:
     if not params:
       return None, 'void'
 
+    digits = '0123456789'
+    is_negative = params.startswith('-')
+    params_no_comma = params.replace(',', '').replace('-', '')
+    is_number = all([l in digits for l in params_no_comma])
+    if is_number:
+      value = int(params_no_comma) * (-1 if is_negative else 1)
+      return value, 'number'
     # A range: 0..11
     range_pattern = r'(\d{1,})\.\.(\d{1,})'
     range_match = re.match(range_pattern, params)
@@ -75,43 +82,38 @@ class StrangLexer:
     str_count = self.count_char(raw_parent, str_start) == self.count_char(raw_parent, str_end) and self.count_char(raw_parent, str_start) == 1
     is_str = str_literal and str_count
 
+    is_new = raw_parent == 'new'
     is_list = not is_str and ',' in raw_parent
 
-    if is_var:
-      plen = len(strang_symbols['variable_prefix'])
-      return {'type': 'variable', 'selector': raw_parent[plen:]}
-    elif is_const:
-      plen = len(strang_symbols['constant_prefix'])
-      return {'type': 'constant', 'selector': raw_parent[plen:]}
+    if is_var or is_const:
+      title = 'variable' if is_var else 'constant'
+      plen = len(strang_symbols[f'{title}_prefix'])
+      return {'type': title, 'selector': raw_parent[plen:]}
     elif is_str:
-      slen = len(strang_symbols['string_start'])
-      elen = len(strang_symbols['string_end']) * -1
+      slen = len(str_start)
+      elen = len(str_end) * -1
       return {'type': 'string', 'selector': raw_parent[slen:elen]}
     elif is_list:
       str_list = raw_parent.replace(' ', '').split(',')
-      is_str_list = str_start in raw_parent
       convert = lambda v: int(v) if not v.startswith(str_start) else str(v[1:-1])
       convert_list = [convert(s) for s in str_list]
       final_list = [s for s in convert_list if not not s]
       return {'type': 'list', 'selector': final_list}
+    elif is_new:
+      return {'type': 'new', 'selector': []}
     elif raw_parent == '!strang':
       return {'type': 'settings', 'selector': 'strang'}
 
     return {'type': 'node', 'selector': raw_parent}
 
   def lex_function(self, raw_func):
-    func_pattern = r'(.+?)(.)>(.+)?'
+    func_pattern = r'(.+?)(?: )?(t[\d|a])?(?: )?(.)>(.+)?'
     matches = re.match(func_pattern, raw_func)
     if matches:
       groups = matches.groups()
-      func, key, params = (None, None, None)
 
-      if None in groups:
-        func = groups[0].strip()
-        key = groups[1].strip()
-        params = '$'
-      else:
-        func, key, params = (p.strip() for p in groups)
+      c_strip = lambda v: v.strip() if v else None
+      func, tindex, key, params = (c_strip(p) for p in groups)
 
       if key not in self.func_symbols:
         arrow_types = ', '.join([s + '>' for s in self.func_symbols.keys()])
@@ -166,7 +168,7 @@ class StrangLexer:
     whitespace = [' ', '\t']
     return all([l in whitespace for l in text])
 
-  def lex(self, raw_code):
+  def clean_lines(self, raw_code):
     lines = raw_code.split('\n')
     lines_no_comments = [
       l.split(strang_symbols['comment_single_line'])[0]
@@ -186,10 +188,14 @@ class StrangLexer:
         is_comment = False
 
     lines_not_empty = [l for l in lines_no_multilines if not self.is_only_whitespace(l)]
+    return lines_not_empty
+
+  def lex(self, raw_code):
+    lines = self.clean_lines(raw_code)
 
     current_block = 0
     blocks = []
-    for line in lines_not_empty:
+    for line in lines:
       tab_size = self.count_leading_tabs(line)
       if tab_size == 0:
         if self.is_function(line):
