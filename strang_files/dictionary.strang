@@ -1,0 +1,10 @@
+; Arrows:
+  ; Map Arrow: ->
+  ; Filter Arrow: =>
+  ; Reduce Arrow: _>
+  ; Every Arrow: :>
+  ; Some Arrow: .>
+  ; All Arrow: |>
+
+; Constants: @name
+; Variables: @*name

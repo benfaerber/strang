@@ -35,13 +35,6 @@ a
   log |> $
 *)
 
-(*
-; I want to implement this!
-strang
-  include -> {apple.strang}
-  include -> {banana.strang}
-  flag -> {verbose}
-*)
 
 (*
 .number-list li
@@ -74,10 +67,104 @@ strang
   import -> {secondary}
   flag -> {verbose}
   flag -> {save_logs}
+  unflag -> {no_logs}
 
+(*
 .number-list li
   map -> {Item: $.text}
   ; Global Log!
   log |> $
   ; Each Log!
   ;log -> $
+*)
+
+.number-list li
+  map -> $.text
+  int
+  @numbers
+
+@numbers
+  log |>
+  sum _>
+  log |>
+
+@numbers
+  gt :> 10
+  plog |> $
+
+{Hello World!}
+  log |> $
+
+{Hello World!}
+  plog |>
+
+@numbers
+  last |>
+  log |>
+
+@numbers
+  plus -> 10
+  @*test_var
+
+@*test_var
+  times -> -1
+  @*test_var
+
+@*test_var
+  log |>
+
+{HOWDY}
+  slice -> 0..3
+  capitalize
+  log
+
+
+{Let's SMOOCH}
+  lower
+  concat _> $
+  log
+
+{Apple Sauce}
+  split -> { }
+  join -> { WALLA }
+  log
+
+@numbers
+  str
+  slice |> 0..1
+  plus -> { IS A NUMBER}
+  log
+
+{moisture}
+  upper
+  @fav_word
+
+1, 3, 4, 5, 6
+  times -> -1
+  log |>
+
+{hi}, {hello}, {hola}
+  upper
+  log |>
+
+(*
+; Tuple Syntax
+{hello} | {hola}, {goodbye} | {adios}, {dog} | {perro}
+  @language
+
+{English to Spanish}
+  log
+
+@language
+  map t2 -> 2
+  capitalize
+  tflip
+  capitalize
+  tflip
+  map -> {EN: $1, ES: $2}
+  log
+*)
+
+;@fav_word
+;  times |> 1,000
+;  log |>

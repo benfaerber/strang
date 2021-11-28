@@ -1,34 +1,59 @@
-def strang_map(function, params, parameter_type, context):
-  return [function({
-    'context': item,
-    'params': params,
-    'param_type': parameter_type
-  }) for item in context]
+def switch_context(data, new_context):
+  data['context'] = new_context
+  return data
 
-def strang_filter(function, params, parameter_type, context):
-  return [item for item in context if not not function({
-    'context': item,
-    'params': params,
-    'param_type': parameter_type
-  })]
+def destruct(data):
+  return (data['context'], data['function'])
 
-def strang_all(function, params, parameter_type, context):
-  return function({
-    'context': context,
-    'params': params,
-    'param_type': parameter_type
-  })
+def strang_map(data):
+  context, function = destruct(data)
+  return [function(switch_context(data, item)) for item in context]
 
-def strang_unimpl(function, params, paramter_type, context):
+def strang_filter(data):
+  context, function = destruct(data)
+  return [
+    item for item in context
+    if not not function(switch_context(data, item))
+  ]
+
+def strang_all(data):
+  _, function = destruct(data)
+  return function(data)
+
+def strang_reduce(data):
+  context, function = destruct(data)
+  for item in context:
+    acc = function(switch_context(data, item))
+
+  return [acc]
+
+def get_bool_list(data):
+  context, function = destruct(data)
+  bool_list = [
+    function(switch_context(data, item))
+    for item in context
+  ]
+
+  return bool_list
+
+def strang_every(data):
+  return [all(get_bool_list(data))]
+
+def strang_some(data):
+  return [any(get_bool_list(data))]
+
+
+def strang_unimpl(data):
+  context, = destruct(data)
   print('Not Implemented!!!')
   return context
 
 strang_iters = {
   'map': strang_map,
   'filter': strang_filter,
-  'reduce': strang_unimpl,
-  'every': strang_unimpl,
-  'some': strang_unimpl,
+  'reduce': strang_reduce,
+  'every': strang_every,
+  'some': strang_some,
   'all': strang_all,
   'unimpl': strang_unimpl
 }

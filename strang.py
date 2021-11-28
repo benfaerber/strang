@@ -1,18 +1,17 @@
 from bs4 import BeautifulSoup
 
 from lexer import StrangLexer
-
 from iters import strang_iters
 from std import strang_std
 
 class Strang:
-  def __init__(self, raw_code: str, raw_html: str, functional_context: dict):
+  def __init__(self, raw_code: str, raw_html: str, functional_context: dict = {}, flags: list = []):
     self.lexer = StrangLexer()
     self.lex = self.lexer.lex(raw_code)
     self.dom = BeautifulSoup(raw_html, 'html.parser')
     self.functional_context = functional_context
 
-    self.flags = []
+    self.flags = flags
     self.imported_files = []
 
     self.variables = {}
@@ -23,11 +22,20 @@ class Strang:
     self.definition_names = self.variable_names + self.constant_names
 
   def get_node(self, parent):
-    selector = parent['selector']
-    if parent['type'] == 'variable':
+    selector, ptype = (parent[k] for k in ['selector', 'type'])
+
+    if ptype == 'variable':
+      if selector not in self.variables:
+        raise ValueError(f'Variable "{selector}" is not defined!')
       return self.variables[selector]
-    elif parent['type'] == 'constant':
+    elif ptype == 'constant':
+      if selector not in self.constants:
+        raise ValueError(f'Constant "{selector}" is not defined!')
       return self.constants[selector]
+    elif ptype == 'string':
+      return [str(selector)]
+    elif ptype == 'list':
+      return selector
 
     return self.dom.select(selector, href=True)
 
@@ -53,6 +61,20 @@ class Strang:
       return context
 
 
+  def get_default_accumulator(self, context):
+    if not context:
+      return 0
+
+    defs = {
+      int: 0,
+      str: '',
+      float: 0.0,
+      bool: False
+    }
+
+    ftype = type(context[0])
+    return defs[ftype] if ftype in defs else 0
+
   def run_function(self, function, context):
     name, params, ptype, ftype = (function[k] for k in ['name', 'params', 'ptype', 'ftype'])
 
@@ -62,16 +84,34 @@ class Strang:
     iter_func = strang_iters[ftype]
     func = self.get_function(name)
 
-    new_context = iter_func(func, params, ptype, context)
+    accumulator = self.get_default_accumulator(context)
+    new_context = iter_func({
+      'function': func,
+      'params': params,
+      'ptype': ptype,
+      'context': context,
+      'acc': accumulator,
+      'flags': self.flags
+    })
     return new_context
 
   def reload_dom(self, params, ptype=None):
     print('Not yet implemented!')
 
+  def unset_flag(self, params, ptype):
+    if ptype != 'string':
+      raise ValueError(f'A flag must be a string!')
+
+    self.flags.remove(params)
+
   def set_flag(self, params, ptype=None):
-    if ptype == 'string':
-      self.flags.append(params)
-    return
+    if ptype != 'string':
+      raise ValueError(f'A flag must be a string!')
+
+    if params in self.flags:
+      return
+
+    self.flags.append(params)
 
   def import_file(self, params, ptype=None):
     if ptype != 'string':
@@ -86,23 +126,20 @@ class Strang:
       self.lex = import_lex + self.lex
 
   def set_settings(self, block):
-    parent = block['parent']
     functions = block['children']
     for function in functions:
       name, params, ptype = (function[k] for k in ['name', 'params', 'ptype'])
       funcs = {
         'load': self.reload_dom,
         'flag': self.set_flag,
+        'unflag': self.unset_flag,
         'import': self.import_file
       }
 
       funcs[name](params, ptype)
 
-    return
-
   def run_block(self, block):
     parent, children = (block[k] for k in ['parent', 'children'])
-
     if parent['type'] == 'settings':
       return
 
@@ -120,28 +157,9 @@ class Strang:
     for block in self.lex:
       self.run_block(block)
 
-
 def main():
-  import sys
-  args = sys.argv[1:]
-  if len(args) == 0:
-    print('You must include a strang file!\nUsage: python strang.py example.strang')
-    return
-
-  code_filename = args[0]
-  html_filename = 'test.html' if len(args) >= 1 else args[1]
-
-  if not code_filename.endswith('.strang'):
-    code_filename += '.strang'
-
-  with open(f'strang_files/{code_filename}', 'r') as code_file, open(f'html/{html_filename}') as html_file:
-    raw_code = code_file.read()
-    raw_html = html_file.read()
-    functional_context = {}
-    strang = Strang(raw_code, raw_html, functional_context)
-    strang.execute()
-
-
+  from cli import cli
+  cli()
 
 if __name__ == '__main__':
   main()

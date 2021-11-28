@@ -1,0 +1,127 @@
+; Welcome to the Strang Tutorial
+; Strang is an experimental functional scripting language designed to manipulate DOM in elegant ways
+; In this tutorial we will be parsing this HTML File
+(*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Document</title>
+</head>
+<body>
+  <h1>Test Document</h1>
+  <ul class="number-list">
+    <li>5</li>
+    <li>12</li>
+    <li>5</li>
+    <li>23</li>
+    <li>12</li>
+    <li>66</li>
+    <li>22</li>
+    <li>26</li>
+    <li>11</li>
+  </ul>
+  <div>
+    <span>Hello</span>
+    <span></span>
+    <span>Hola</span>
+    <span>Hallo</span>
+    <span>Bonjour</span>
+  </div>
+  <img src="https://demotix.com/wp-content/uploads/2019/07/Dachshund-Puppies1.jpg" alt="Puppy">
+  <p id="intro">
+    Lorem ipsum dolor sit amet, consectetur adipisicing elit.
+    Vero eveniet, expedita consequuntur, quisquam veniam animi iusto aut, culpa officia autem commodi!
+    Tempore reiciendis laudantium deleniti pariatur hic quaerat accusamus optio.
+  </p>
+</body>
+</html>
+*)
+
+; You can select nodes using a CSS Selector, we will be selecting the H1 Tag
+h1
+
+; Now that the tag is selected, let's grab its text
+h1
+  map -> $.text
+
+; Whitespace is significant in Strang
+; Blocks are denoted by 2 spaces
+; Every value is an array in Strang, in this example there is only 1 H1 but it is still an array
+; This code selects the H1 element then it runs the map function on every element selected and returns it's text
+
+; The map function is very important, it takes an item as a parameter and returns a modification of the item
+; A dollar sign represents the current item, so in this example we are selecting the text from the item
+; You can also use a string literal with the map function:
+h1
+  map -> {Here is my text: $.text}
+; A string is denoted by curly braces
+
+; Now we can log out this text using the 'log' function
+h1
+  map -> {Here is my text: $.text}
+  log
+
+; When we don't include an arrow in a function call it is transformed to
+; FUNCTION -> $
+; This means it will iterate over every element using the unmodified value
+
+; Iteration Arrows:
+; Iteration Arrows allow us to control how the array is iterated over.
+; Here is a list of all arrows:
+; The Map Arrow (->)
+; - Iterates over each value in the array and returns the response of the function being mapped
+; Example:
+.number-list li
+  map -> $.text
+  int
+  log |> $
+  @@numbers
+; Returns: [5, 12, 5, 23, 12, 66, 22, 26, 11]
+
+; The Filter Arrow (=>)
+; - Iterates over each value in the array, if the response of the function is truthy the unmodified element is saved, if it is falsy it is thrown out
+; Example:
+span
+  map -> $.text
+  log |> $
+  truthy => $
+  log |> $
+
+; Returns:
+;   ['Hello', '', 'Hola', 'Hallo', 'Bonjour']
+;   ['Hello', 'Hola', 'Hallo', 'Bonjour']
+
+; The Reduce Arrow (_>)
+; - Iterates over each value in the array and adds it to an accumulator
+; Example:
+
+@@numbers
+  log |> $
+  sum _> $
+  log
+; Returns:
+; [5, 12, 5, 23, 12, 66, 22, 26, 11]
+; 182
+
+; The Every Arrow (:>)
+; - Checks to make sure all values are true, returns a single boolean
+; Example
+@@numbers
+  gt :> 10
+  log
+
+; The Some Arrow (.>)
+; - Checks to make sure any value is true, returns a single boolean
+@@numbers
+  gt .> 10
+  log
+
+; The All Arrow (|>)
+; - Applies an operation to the entire array
+; Example:
+@@numbers
+  slice |> 0..5
+  log |> $
