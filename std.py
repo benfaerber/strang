@@ -79,7 +79,8 @@ def strang_concat(data):
   return str(data.acc) + str(data.context)
 
 def strang_reverse(data):
-  return data.context.reverse()
+  data.context.reverse()
+  return data.context
 
 strang_std = {
   'log': strang_log,
@@ -123,5 +124,7 @@ strang_std = {
   # Conversion
   'int': std_operators.strang_int,
   'float': std_operators.strang_float,
-  'str': std_operators.strang_str
+  'str': std_operators.strang_str,
+
+  'swap': std_operators.strang_swap
 }

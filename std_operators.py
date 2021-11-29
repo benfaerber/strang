@@ -64,3 +64,11 @@ def strang_float(data):
 
 def strang_str(data):
   return str(data.context)
+
+def strang_swap(data):
+  index_a, index_b = data.cells
+  cell_a = data.context.get_cell(index_a)
+  cell_b = data.context.get_cell(index_b)
+  data.context.set_cell(index_a, cell_b)
+  data.context.set_cell(index_b, cell_a)
+  return data.context

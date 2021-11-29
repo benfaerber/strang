@@ -7,16 +7,22 @@ def c(data, new_context):
   return response
 
 def strang_map(data):
-  return [c(data, item) for item in data.context]
+  from_cell_index, to_cell_index = data.cells
+  context_cell = data.context.get_cell(from_cell_index)
+  return [c(data, item) for item in context_cell]
 
 def strang_filter(data):
+  from_cell_index, to_cell_index = data.cells
+  context_cell = data.context.get_cell(from_cell_index)
   return [
-    item for item in data.context
+    item for item in context_cell
     if not not c(data, item)
   ]
 
 def strang_all(data):
-  return data.function(data)
+  from_cell_index, to_cell_index = data.cells
+  context_cell = data.context.get_cell(from_cell_index)
+  return c(data, context_cell)
 
 def strang_reduce(data):
   for item in data.context:

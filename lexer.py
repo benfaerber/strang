@@ -35,7 +35,7 @@ class StrangLexer:
 
   def parse_params(self, params: str):
     if not params:
-      return None, 'void'
+      return None, None
 
     digits = '0123456789'
     is_negative = params.startswith('-')
@@ -86,7 +86,6 @@ class StrangLexer:
         to_cell = cell_to_int(cell_chunks[1])
 
       cells = (from_cell, to_cell)
-      print(cells)
       return LexedModifier(type='cells', value=cells)
 
     return None

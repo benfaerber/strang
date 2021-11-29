@@ -1,0 +1,26 @@
+
+new
+  range |> 1..=10
+  @numbers
+
+@numbers
+  times c1>c2 -> -1
+  log c1 |>
+  log c2 |>
+  swap c1>c2 |>
+  log c2 |>
+
+{}
+  log
+{SILLy SWAPPY AN DTINGS}
+  log
+
+@numbers
+  times c1>c2 -> -1
+  log c1 |>
+  str c2 ->
+  prepend c2 -> {KISS KISS }
+  swap c1>c2 |>
+  reverse |>
+  log |>
+  log c2 |>

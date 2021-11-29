@@ -1,24 +1,13 @@
 from os import name
 from bs4 import BeautifulSoup
 from collections import namedtuple
+from copy import deepcopy
 
 from lexer import StrangLexer
 from iters import strang_iters
 from std import strang_std
 from context import Context
-
-class FunctionCall:
-  def __init__(self, function, lexed_function: namedtuple, context: Context, acc=None, flags=[]):
-    self.function = function
-
-    self.params = lexed_function.params
-    self.ptype = lexed_function.ptype
-    self.modifier = lexed_function.modifier if lexed_function.modifier else None
-
-    self.context = context
-    self.acc = acc
-    self.flags = flags
-
+from functioncall import FunctionCall
 
 class Strang:
   def __init__(self, raw_code: str, raw_html: str, functional_context: dict = {}, flags: list = []):
@@ -39,22 +28,25 @@ class Strang:
     self.constant_names = ['constant', 'const']
     self.definition_names = self.variable_names + self.constant_names
 
+  def get_variable(self, pa):
+      table = self.variables if pa.type == 'variable' else self.constants
+      if pa.key not in table:
+        raise ValueError(f'{pa.type} "{pa.key}" is not defined!')
+      return deepcopy(table[pa.key])
+
   def get_node(self, parent):
-    p = parent
+    node_getters = {
+      'string': lambda pa: [str(pa.key)],
+      'list': lambda pa: pa.key,
+      'null': lambda pa: [],
+      'variable': self.get_variable,
+      'constant': self.get_variable
+    }
 
-    if p.type == 'variable' or p.type == 'constant':
-      table = self.variables if p.type == 'variable' else self.constants
-      if p.key not in table:
-        raise ValueError(f'{p.type} "{p.key}" is not defined!')
-      return table[p.key]
-    elif p.type == 'string':
-      return [str(p.key)]
-    elif p.type == 'list':
-      return p.key
-    elif p.type == 'null':
-      return []
+    if parent.type in node_getters:
+      return (node_getters[parent.type](parent), parent.type)
 
-    return self.dom.select(p.key, href=True)
+    return (self.dom.select(parent.key, href=True), 'node')
 
   def get_function(self, name):
     if name in strang_std:
@@ -67,16 +59,14 @@ class Strang:
 
   def define_variable(self, name, context, params):
     is_var = name in self.variable_names
-    if is_var:
-      self.variables[params] = context
-      return context
-    else:
-      is_defined = params in self.constants
-      if is_defined:
-        raise ValueError(f'Constant "{params}" is already defined!')
-      self.constants[params] = context
-      return context
+    table = self.variables if is_var else self.constants
 
+    is_defined = params in self.constants
+    if not is_var and is_defined:
+      raise ValueError(f'Constant "{params}" is already defined!')
+
+    table[params] = deepcopy(context.get_data())
+    return context
 
   def get_default_accumulator(self, context):
     if not context:
@@ -89,24 +79,34 @@ class Strang:
       bool: False
     }
 
-    ftype = type(context[0])
+    ftype = context.get_cell_type(1)
     return defs[ftype] if ftype in defs else 0
 
   def run_function(self, lexed_function, context):
     if 'show_functions' in self.flags:
-      print(function)
+      print(lexed_function)
     f = lexed_function
 
+    # Define Variable
     if f.name in self.definition_names:
-      return self.define_variable(f.name, context, f.params)
+      definition = self.define_variable(f.name, context, f.params)
+      return definition
 
     iter_func = strang_iters[f.ftype]
     caller = self.get_function(f.name)
-
     accumulator = self.get_default_accumulator(context)
-    data = FunctionCall(function=caller, lexed_function=lexed_function, context=context, acc=accumulator, flags=self.flags)
-    new_context = iter_func(data)
-    return new_context
+    function_call = FunctionCall(function=caller, lexed_function=lexed_function, context=context, acc=accumulator, flags=self.flags)
+    if 'show_functions' in self.flags:
+      print(function_call)
+
+    from_cell_index, to_cell_index = function_call.cells
+    if f.name == 'swap':
+      return caller(function_call)
+
+    new_cell = iter_func(function_call)
+
+    context.set_cell(to_cell_index, new_cell)
+    return context
 
   def reload_dom(self, params, ptype=None):
     print('Not yet implemented!')
@@ -156,8 +156,9 @@ class Strang:
     if parent.type == 'settings':
       return
 
-    node = self.get_node(parent)
-    context = node
+    node, parent_type = self.get_node(parent)
+    complete = parent_type == 'variable' or parent_type == 'constant'
+    context = Context(node, complete=complete)
     for func in children:
       context = self.run_function(func, context)
 
