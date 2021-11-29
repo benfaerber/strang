@@ -5,10 +5,10 @@ from collections import namedtuple
 from lexer import StrangLexer
 from iters import strang_iters
 from std import strang_std
-
+from context import Context
 
 class FunctionCall:
-  def __init__(self, function, lexed_function, context, acc=None, flags=[]):
+  def __init__(self, function, lexed_function: namedtuple, context: Context, acc=None, flags=[]):
     self.function = function
 
     self.params = lexed_function.params

@@ -32,7 +32,6 @@ null
   modulo -> 5
   log |>
 
-
 (*
 ; Syntax I want:
 
@@ -55,7 +54,7 @@ null
   log c3 |>
 
 null
-  range |> 10..=0
+  range |> 10..0
   log |>
 
 null
