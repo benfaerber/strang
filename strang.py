@@ -92,6 +92,10 @@ class Strang:
       definition = self.define_variable(f.name, context, f.params)
       return definition
 
+    if f.name == 'dlog':
+      print(context.get_data())
+      return context
+
     iter_func = strang_iters[f.ftype]
     caller = self.get_function(f.name)
     accumulator = self.get_default_accumulator(context)
@@ -100,6 +104,7 @@ class Strang:
       print(function_call)
 
     from_cell_index, to_cell_index = function_call.cells
+
     if f.name == 'swap':
       return caller(function_call)
 

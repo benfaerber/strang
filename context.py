@@ -1,6 +1,6 @@
 class Context:
-  def __init__(self, container: list = [], complete: bool=False):
-    self._container = [container] if not complete else container
+  def __init__(self, context: list = [], complete: bool = False):
+    self._container = [context] if not complete else context
 
   def get_cell_count(self):
     return len(self._container)
@@ -13,11 +13,12 @@ class Context:
     row = [0 for _ in range(cols)]
     self._container.append(row)
 
-  def get_cell(self, cell_index):
-    c = self.get_cell_count()
-    if c < cell_index:
+  def should_add(self, cell_index):
+    if len(self._container) < cell_index:
       self.add_new_cell()
 
+  def get_cell(self, cell_index):
+    self.should_add(cell_index)
     return self._container[cell_index - 1]
 
   def get_cell_type(self, cell_index):
@@ -36,11 +37,7 @@ class Context:
     return 'int'
 
   def set_cell(self, cell_index, new_data):
-    c = self.get_cell_count()
-    if c < cell_index:
-      self.add_new_cell()
-
-    cols = self.get_column_count()
+    self.should_add(cell_index)
     self._container[cell_index - 1] = new_data
 
   def swap_cells(self, swap_this, swap_that):

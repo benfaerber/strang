@@ -19,6 +19,9 @@ def string_literal_map(context, params, property_pattern):
   fillins = re.findall(property_pattern, params)
   built = params
   for fillin in fillins:
+    if fillin == '':
+      built = built.replace('$', context)
+      continue
     built = built.replace(f'$.{fillin}', get_attr(fillin, context))
   return built
 
@@ -112,6 +115,9 @@ strang_std = {
   'ge': std_operators.strang_ge,
   'eq': std_operators.strang_eq,
   'ne': std_operators.strang_ne,
+
+  # Logic
+  'if': std_operators.strang_if,
 
   # Operations
   'plus': std_operators.strang_plus,

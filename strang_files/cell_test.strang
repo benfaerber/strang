@@ -24,3 +24,8 @@ new
   reverse |>
   log |>
   log c2 |>
+
+@numbers
+  str c1>c2 ->
+  map c2 -> {Apple $}
+  dlog

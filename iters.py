@@ -9,7 +9,10 @@ def c(data, new_context):
 def strang_map(data):
   from_cell_index, to_cell_index = data.cells
   context_cell = data.context.get_cell(from_cell_index)
-  return [c(data, item) for item in context_cell]
+  return [
+    c(data, item)
+    for item in context_cell
+  ]
 
 def strang_filter(data):
   from_cell_index, to_cell_index = data.cells

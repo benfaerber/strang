@@ -72,3 +72,9 @@ def strang_swap(data):
   data.context.set_cell(index_a, cell_b)
   data.context.set_cell(index_b, cell_a)
   return data.context
+
+def strang_if(data):
+  if data.context:
+    return data.params
+
+  return 'no_change'
