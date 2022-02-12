@@ -1,2 +1,2 @@
-# leafCrawler
- A web crawler to collect catagory data
+# Strang
+A simple array paradigm programming language
